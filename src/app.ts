@@ -2,7 +2,7 @@ import express from "express";
 import path from "path";
 import logger from "morgan";
 import cookieParser from "cookie-parser";
-import MainRouter from "./mainRoute";
+import MainRouter from "./mainRoute.route";
 
 const app = express();
 

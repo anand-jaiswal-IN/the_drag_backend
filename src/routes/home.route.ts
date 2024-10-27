@@ -1,4 +1,4 @@
-import { home_page, about_page } from "../controllers/index";
+import { home_page, about_page } from "../controllers/index.controller";
 import { Router } from "express";
 
 const router = Router();

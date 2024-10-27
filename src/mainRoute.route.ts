@@ -1,8 +1,8 @@
 // mainRoute.ts
 import { Application, Request, Response, NextFunction } from "express";
 import createError from "http-errors";
-import { homeRouter, authRouter } from "./routes/index";
-import verifyJWTToken from "./middlewares/verify_jwt";
+import { homeRouter, authRouter, userRouter } from "./routes/index.route";
+import verifyJWTToken from "./middlewares/verify_jwt.middleware";
 
 class MainRouter {
   constructor(private app: Application) {}
@@ -11,6 +11,7 @@ class MainRouter {
     this.app.use("/auth", authRouter);
     this.app.use(verifyJWTToken);
     this.app.use("/", homeRouter);
+    this.app.use("/user", userRouter);
     this.app.use(this.notFoundHandler);
     this.app.use(this.errorHandler);
   }

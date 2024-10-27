@@ -112,4 +112,5 @@ const logout = async (req: Request, res: Response): Promise<void> => {
     api_response_error(res, 500, "Internal server error : " + error);
   }
 };
+
 export { register, login, logout };

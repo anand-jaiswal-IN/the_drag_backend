@@ -13,7 +13,9 @@ const verifyJWTToken = (
     return;
   }
   try {
-    const secret = process.env.SECRET_KEY || "secret";
+    const secret =
+      process.env.SECRET_KEY ||
+      "xmu0$v6lnk9xt7%^6pfbs67cv7(h%^_*^xbc@(3071m6x)=)ol";
     jwt.verify(token, secret, (err: any, decoded: any) => {
       if (err) {
         api_response_error(res, 401, "Unauthorized to access.");
