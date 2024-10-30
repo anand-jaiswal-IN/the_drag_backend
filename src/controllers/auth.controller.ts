@@ -5,21 +5,26 @@ import {
   api_success_response,
   api_response_error,
 } from "../helpers/api_response";
-import jwt from "jsonwebtoken";
+import {
+  generateAccessToken,
+  generateRefreshToken,
+} from "../helpers/generate_auth_token";
 
 const register = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password, firstname, lastname } = req.body;
+    const { email, password, username } = req.body;
 
     // Validate input data
-    if (!email || !password) {
-      api_response_error(res, 400, "Email and password are required");
+    if (!email || !username || !password) {
+      api_response_error(res, 400, "email, username and password are required");
       return;
     }
 
     // Check if the user already exists
-    const existingUser = await prisma.user.findUnique({ where: { email } });
-    if (existingUser) {
+    const existingUser = await prisma.user.findMany({
+      where: { OR: [{ email: email }, { username: username }] },
+    });
+    if (existingUser.length > 0) {
       api_response_error(res, 409, "User already exists");
       return;
     }
@@ -32,8 +37,7 @@ const register = async (req: Request, res: Response): Promise<void> => {
       data: {
         email,
         password: hashedPassword,
-        firstname,
-        lastname,
+        username,
       },
     });
 
@@ -41,8 +45,9 @@ const register = async (req: Request, res: Response): Promise<void> => {
     const newUserResponse = {
       id: newUser.id,
       email: newUser.email,
-      firstname: newUser.firstname,
-      lastname: newUser.lastname,
+      username: newUser.username,
+      haveProfile: newUser.haveProfile,
+      isStaff: newUser.isStaff,
     };
     api_success_response(
       res,
@@ -57,16 +62,30 @@ const register = async (req: Request, res: Response): Promise<void> => {
 
 const login = async (req: Request, res: Response): Promise<void> => {
   try {
-    const { email, password } = req.body;
+    const { user_identifier, password } = req.body;
 
     // Validate input data
-    if (!email || !password) {
-      api_response_error(res, 400, "Email and password are required");
+    if (!user_identifier || !password) {
+      api_response_error(res, 400, "email/username and password are required");
       return;
     }
 
-    // Check if the user exists
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Check if the user present in the database by finding with username
+    let user = await prisma.user.findUnique({
+      where: {
+        username: user_identifier,
+      },
+    });
+
+    // Check if the user present in the database by finding with email
+    if (!user) {
+      user = await prisma.user.findUnique({
+        where: {
+          email: user_identifier,
+        },
+      });
+    }
+
     if (!user) {
       api_response_error(res, 401, "Invalid email or password");
       return;
@@ -79,26 +98,51 @@ const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate a JWT token
-    const payload = {
-      id: user.id,
-      email: user.email,
-      firstname: user.firstname,
-      lastname: user.lastname,
-    };
-    const secret =
-      process.env.SECRET_KEY ||
-      "xmu0$v6lnk9xt7%^6pfbs67cv7(h%^_*^xbc@(3071m6x)=)ol";
-    const token = jwt.sign(payload, secret, { expiresIn: "1d" });
-    res.cookie("token", token, {
-      maxAge: 60 * 60 * 24 * 1000,
-      httpOnly: true,
-      sameSite: "none",
-      secure: true,
+    // Delete old access token and refresh token and set new one
+    await prisma.accessToken.deleteMany({
+      where: {
+        userId: user.id,
+      },
+    });
+    await prisma.refreshToken.deleteMany({
+      where: {
+        userId: user.id,
+      },
     });
 
-    // Send a success response
-    api_success_response(res, 200, "User logged in successfully");
+    // Generating access and refresh tokens
+    const access_token = generateAccessToken(user);
+    await prisma.accessToken.create({
+      data: {
+        token: access_token,
+        userId: user.id,
+      },
+    });
+
+    const refresh_token = generateRefreshToken(user);
+    await prisma.refreshToken.create({
+      data: {
+        token: refresh_token,
+        userId: user.id,
+      },
+    });
+
+    res.cookie("access_token", access_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+    res.cookie("refresh_token", refresh_token, {
+      httpOnly: true,
+      secure: true,
+      sameSite: "none",
+    });
+
+    // Sending success response
+    api_success_response(res, 200, "login tokens generated", {
+      access_token,
+      refresh_token,
+    });
   } catch (error) {
     api_response_error(res, 500, "Internal server error : " + error);
   }
@@ -106,7 +150,9 @@ const login = async (req: Request, res: Response): Promise<void> => {
 
 const logout = async (req: Request, res: Response): Promise<void> => {
   try {
-    res.clearCookie("token");
+    res.clearCookie("access_token");
+    res.clearCookie("refresh_token");
+    req.user = null;
     api_success_response(res, 200, "User logged out successfully");
   } catch (error) {
     api_response_error(res, 500, "Internal server error : " + error);

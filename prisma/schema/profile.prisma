@@ -1,0 +1,100 @@
+model Profile {
+  id                       Int     @id @default(autoincrement())
+  isProfileActive          Boolean @default(false)
+  firstName                String?
+  lastName                 String?
+  avatar                   String?
+  bio                      String?
+  pronoun                  Int     @default(4) // 1 -> he/him, 2 -> she/her, 3 -> they/them, 4-> don't know
+  tags                     String? // `js list` of tags name
+  life_style               String  @default("travel") // selective life style
+  contact_price            Float   @default(0.0)
+  minimum_sponsers_ammount Float   @default(0.0)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @unique
+
+  statuses              Status[]
+  socialMediaLinks      SocialMediaLink[]
+  addresss              Address[]
+  contacts              Contact[]
+  taskPortfolio         TaskPortfolio[]
+  provided_sponserships Sponsorship[]
+  payment_method        PaymentMethod?
+}
+
+model TaskPortfolio {
+  id          Int     @id @default(autoincrement())
+  attachment  String
+  description String
+  title       String
+  type        String  @default("image")
+  tags        String // `js list` of tags name
+  firm        String?
+  link        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id])
+  profileId Int
+}
+
+model Status {
+  id     Int    @id @default(autoincrement())
+  type   String @default("availibility") //  activity, emotional, health, location, availibility
+  status String @default("idle")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id])
+  profileId Int
+}
+
+model SocialMediaLink {
+  id              Int    @id @default(autoincrement())
+  link            String @unique
+  platform        String @unique // facebook, instagram, twitter
+  social_count    Int    @default(0) // followers or instagram count
+  social_username String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id])
+  profileId Int
+}
+
+model Address {
+  id           Int     @id @default(autoincrement())
+  type         String  @default("current") // current and permanent
+  addressLine1 String
+  addressLine2 String?
+  country      String  @default("India")
+  state        String
+  city         String
+  pincode      Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id])
+  profileId Int
+}
+
+model Contact {
+  id           Int    @id @default(autoincrement())
+  type         String @default("email") // email and phone
+  contact      String
+  contact_type String @default("personal") // personal and work
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  profile   Profile @relation(fields: [profileId], references: [id])
+  profileId Int
+}

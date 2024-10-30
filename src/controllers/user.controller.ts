@@ -17,7 +17,11 @@ const sendVerificationOtp = async (
       return;
     }
     const user = await prisma.user.findUnique({ where: { email } });
-    if (user?.isVerified) {
+    if (!user) {
+      api_response_error(res, 404, "User not found");
+      return;
+    }
+    if (user.isVerified) {
       api_response_error(res, 409, "User already verified");
       return;
     }
@@ -33,7 +37,7 @@ const sendVerificationOtp = async (
     // database insertion
     await prisma.verficationOtp.create({
       data: {
-        userId: user?.id,
+        userId: user.id,
         code: String(otp),
         messageId: mailinfo.id,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000), // expire after 5 minutes

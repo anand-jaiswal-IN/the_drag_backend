@@ -1,0 +1,20 @@
+model Sponsorship {
+  id              Int      @id @default(autoincrement())
+  title           String
+  description     String? // can be html
+  featured_image  String?
+  message         String?
+  firm_name       String
+  link            String?
+  offering_amount Float    @default(0.0)
+  isAccepted      Boolean  @default(false) // if offer is accepted then chats will open to talk
+  isClosed        Boolean  @default(false)
+  expiry_date     DateTime
+
+  createdAt DateTime @default(now())
+
+  sender     User    @relation(fields: [senderId], references: [id])
+  senderId   Int
+  receiver   Profile @relation(fields: [receiverId], references: [id])
+  receiverId Int
+}

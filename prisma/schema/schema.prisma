@@ -1,0 +1,69 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["prismaSchemaFolder"]
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          Int     @id @default(autoincrement())
+  username    String  @unique
+  email       String  @unique
+  password    String
+  isVerified  Boolean @default(false)
+  isStaff     Boolean @default(false)
+  haveProfile Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  otps            VerficationOtp[]
+  profile         Profile?
+  notifications   Notification[]
+  provided_offers Sponsorship[]
+  access_tokens   AccessToken[]
+  refresh_token   RefreshToken?
+
+  @@index([email, username])
+}
+
+model VerficationOtp {
+  id        Int    @id @default(autoincrement())
+  code      String
+  messageId String
+
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model AccessToken {
+  id    Int    @id @default(autoincrement())
+  token String
+
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int
+}
+
+model RefreshToken {
+  id    Int    @id @default(autoincrement())
+  token String
+
+  createdAt DateTime @default(now())
+
+  user   User @relation(fields: [userId], references: [id])
+  userId Int  @unique
+}

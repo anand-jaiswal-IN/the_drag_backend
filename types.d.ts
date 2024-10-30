@@ -7,8 +7,9 @@ declare global {
       user?: null | {
         id: number;
         email: string;
-        firstname: string;
-        lastname: string;
+        username: string;
+        isStaff: boolean;
+        haveProfile: boolean;
       };
     }
   }

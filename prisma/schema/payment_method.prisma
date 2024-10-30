@@ -1,0 +1,51 @@
+// PaymentMethod is connected to every profile
+model PaymentMethod {
+    id   Int    @id @default(autoincrement())
+    name String
+
+    profile   Profile @relation(fields: [profileId], references: [id])
+    profileId Int     @unique
+
+    BankAccount BankAccount[]
+    UPI         UPI[]
+    Card        Card[]
+}
+
+model BankAccount {
+    id                  Int    @id @default(autoincrement())
+    account_holder_name String
+    account_number      String
+    bank_name           String
+    ifsc_code           String
+    branch_name         String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    paymentMethodId Int
+    paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+}
+
+model UPI {
+    id         Int     @id @default(autoincrement())
+    upi_id     String
+    payer_name String
+    upi_number String?
+
+    createdAt DateTime @default(now())
+
+    paymentMethodId Int
+    paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+}
+
+model Card {
+    id               Int    @id @default(autoincrement())
+    card_type        String
+    card_holder_name String
+    card_number      String
+    exp_date         String
+    cvv              String
+
+    paymentMethodId Int
+    paymentMethod   PaymentMethod @relation(fields: [paymentMethodId], references: [id])
+}
